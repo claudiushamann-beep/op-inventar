@@ -1,0 +1,205 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Rolle {
+  OP_PFLEGE
+  OBERARZT
+  CHEFARZT
+  OP_MANAGER
+  AEMP_MITARBEITER
+}
+
+enum SiebTyp {
+  FACHABTEILUNGSSPEZIFISCH
+  FACHUEBERGREIFEND
+}
+
+enum SiebStatus {
+  ENTWURF
+  AKTIV
+  INAKTIV
+  ARCHIVIERT
+}
+
+enum AenderungStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AenderungTyp {
+  ADD_INSTRUMENT
+  REMOVE_INSTRUMENT
+  MODIFY_ANZAHL
+  MODIFY_POSITION
+  CREATE_SIEB
+  DEACTIVATE_SIEB
+}
+
+model User {
+  id            String   @id @default(uuid())
+  username      String   @unique
+  email         String   @unique
+  passwortHash  String
+  rolle         Rolle
+  vorname       String
+  nachname      String
+  active        Boolean  @default(true)
+  adSid         String?  // Active Directory SID für spätere Integration
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  fachabteilung   Fachabteilung?  @relation("FachabteilungMitarbeiter", fields: [fachabteilungId], references: [id])
+  fachabteilungId String?
+
+  chefVonAbteilung  Fachabteilung?  @relation("FachabteilungChefArzt")
+
+  erstellteSiebe      Sieb[]          @relation("SiebErsteller")
+  beantragteAenderungen Aenderung[]    @relation("AenderungAntragsteller")
+  genehmigteAenderungen Aenderung[]   @relation("AenderungGenehmiger")
+  loginLogs           LoginLog[]
+
+  @@map("users")
+}
+
+model LoginLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  timestamp DateTime @default(now())
+  ipAdresse String?
+  erfolg    Boolean
+
+  @@map("login_logs")
+}
+
+model Fachabteilung {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  kuerzel     String   @unique
+  beschreibung String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  chefArzt      User?    @relation("FachabteilungChefArzt", fields: [chefArztId], references: [id])
+  chefArztId    String?  @unique
+
+  siebe        Sieb[]
+  mitarbeiter  User[]    @relation("FachabteilungMitarbeiter")
+
+  @@map("fachabteilungen")
+}
+
+model Hersteller {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  katalogPfad  String?
+  website      String?
+  kontaktEmail String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  instrumente      Instrument[]
+  katalogImporte   KatalogImport[]
+
+  @@map("hersteller")
+}
+
+model Instrument {
+  id            String   @id @default(uuid())
+  artikelNr     String
+  bezeichnung   String
+  beschreibung  String?
+  bildPfad      String?
+  herstellerId  String
+  hersteller    Hersteller @relation(fields: [herstellerId], references: [id])
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  siebInhalte SiebInhalt[]
+
+  @@unique([artikelNr, herstellerId])
+  @@map("instrumente")
+}
+
+model Sieb {
+  id                  String   @id @default(uuid())
+  name                String
+  beschreibung        String?
+  typ                 SiebTyp
+  status              SiebStatus @default(ENTWURF)
+  version             Int        @default(1)
+  bildGepacktPfad     String?
+  fachabteilungId     String?
+  fachabteilung       Fachabteilung? @relation(fields: [fachabteilungId], references: [id])
+  erstelltVonId       String
+  erstelltVon         User       @relation("SiebErsteller", fields: [erstelltVonId], references: [id])
+  freigabeAm          DateTime?
+  freigabeVonId       String?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  instrumente         SiebInhalt[]
+  aenderungen         Aenderung[]
+
+  @@map("siebe")
+}
+
+model SiebInhalt {
+  id            String   @id @default(uuid())
+  siebId        String
+  sieb          Sieb     @relation(fields: [siebId], references: [id], onDelete: Cascade)
+  instrumentId  String
+  instrument    Instrument @relation(fields: [instrumentId], references: [id])
+  anzahl        Int      @default(1)
+  position      String?  // z.B. "A1", "B2", etc.
+  hinweis       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([siebId, instrumentId])
+  @@map("sieb_inhalte")
+}
+
+model Aenderung {
+  id              String         @id @default(uuid())
+  siebId          String
+  sieb            Sieb           @relation(fields: [siebId], references: [id])
+  typ             AenderungTyp
+  altDaten        Json?
+  neuDaten        Json
+  kommentar       String?
+  status          AenderungStatus @default(PENDING)
+  beantragtVonId  String
+  beantragtVon    User           @relation("AenderungAntragsteller", fields: [beantragtVonId], references: [id])
+  beantragtAm     DateTime       @default(now())
+  genehmigtVonId  String?
+  genehmigtVon    User?          @relation("AenderungGenehmiger", fields: [genehmigtVonId], references: [id])
+  genehmigtAm     DateTime?
+  ablehnungsGrund String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@map("aenderungen")
+}
+
+model KatalogImport {
+  id           String   @id @default(uuid())
+  herstellerId String
+  hersteller   Hersteller @relation(fields: [herstellerId], references: [id])
+  dateiPfad    String
+  status       String   @default("pending") // pending, processing, completed, error
+  anzahlInstrumente Int    @default(0)
+  fehler       String?
+  erstelltVon  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("katalog_importe")
+}
