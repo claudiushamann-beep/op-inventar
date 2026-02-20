@@ -9,7 +9,10 @@ import { DashboardPage } from '@/pages/DashboardPage';
 import { SiebePage } from '@/pages/SiebePage';
 import { SiebDetailPage } from '@/pages/SiebDetailPage';
 import { AenderungenPage } from '@/pages/AenderungenPage';
-import { InstrumentePage, FachabteilungenPage, HerstellerPage, UsersPage } from '@/pages/PlaceholderPages';
+import { UsersPage } from '@/pages/UsersPage';
+import { InstrumentePage } from '@/pages/InstrumentePage';
+import { HerstellerPage } from '@/pages/HerstellerPage';
+import { FachabteilungenPage } from '@/pages/FachabteilungenPage';
 
 const theme = createTheme({
   palette: {

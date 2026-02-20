@@ -11,6 +11,6 @@ export const fachabteilungRoutes = Router();
 
 fachabteilungRoutes.get('/', authMiddleware, getFachabteilungen);
 fachabteilungRoutes.get('/:id', authMiddleware, getFachabteilung);
-fachabteilungRoutes.post('/', authMiddleware, requireMinRolle(Rolle.CHEFARZT), createFachabteilung);
-fachabteilungRoutes.put('/:id', authMiddleware, requireMinRolle(Rolle.CHEFARZT), updateFachabteilung);
+fachabteilungRoutes.post('/', authMiddleware, requireMinRolle(Rolle.OP_MANAGER), createFachabteilung);
+fachabteilungRoutes.put('/:id', authMiddleware, requireMinRolle(Rolle.OP_MANAGER), updateFachabteilung);
 fachabteilungRoutes.delete('/:id', authMiddleware, requireMinRolle(Rolle.OP_MANAGER), deleteFachabteilung);

@@ -107,8 +107,11 @@ export const aenderungApi = {
 export const userApi = {
   getAll: () => api.get('/users'),
   getById: (id: string) => api.get(`/users/${id}`),
+  create: (data: Record<string, unknown>) => api.post('/users', data),
   update: (id: string, data: Record<string, unknown>) => api.put(`/users/${id}`, data),
   delete: (id: string) => api.delete(`/users/${id}`),
   changePassword: (id: string, oldPassword: string, newPassword: string) =>
-    api.post(`/users/${id}/change-password`, { oldPassword, newPassword })
+    api.post(`/users/${id}/change-password`, { oldPassword, newPassword }),
+  resetPassword: (id: string, newPassword: string) =>
+    api.post(`/users/${id}/reset-password`, { newPassword })
 };

@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import bcrypt from 'bcryptjs';
 import prisma from '../utils/prisma.js';
 import { AuthRequest } from '../middleware/auth.js';
 
@@ -101,6 +102,68 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
     });
 
     res.json({ message: 'Benutzer gelöscht' });
+  } catch (error) {
+    res.status(500).json({ error: 'Interner Serverfehler' });
+  }
+};
+
+export const createUser = async (req: AuthRequest, res: Response) => {
+  try {
+    const { username, email, passwort, vorname, nachname, rolle, fachabteilungId } = req.body;
+
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [{ username }, { email }]
+      }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ error: 'Benutzername oder E-Mail bereits vergeben' });
+    }
+
+    const passwortHash = await bcrypt.hash(passwort, 10);
+
+    const user = await prisma.user.create({
+      data: {
+        username,
+        email,
+        passwortHash,
+        vorname,
+        nachname,
+        rolle,
+        fachabteilungId: fachabteilungId || null
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        vorname: true,
+        nachname: true,
+        rolle: true,
+        active: true,
+        fachabteilung: true
+      }
+    });
+
+    res.status(201).json(user);
+  } catch (error) {
+    res.status(500).json({ error: 'Interner Serverfehler' });
+  }
+};
+
+export const resetPassword = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+
+    const passwortHash = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { id },
+      data: { passwortHash }
+    });
+
+    res.json({ message: 'Passwort erfolgreich zurückgesetzt' });
   } catch (error) {
     res.status(500).json({ error: 'Interner Serverfehler' });
   }
