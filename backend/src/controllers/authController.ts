@@ -17,27 +17,19 @@ export const login = async (req: Request, res: Response) => {
       include: { fachabteilung: true }
     });
 
-    if (!user || !user.active) {
+    // Timing-Attack-Schutz: bcrypt.compare immer aufrufen, auch wenn Nutzer unbekannt ist
+    const DUMMY_HASH = '$2a$10$invalidhashfortimingprotection000000000000000000000000u';
+    const isValidPassword = await bcrypt.compare(password, user?.passwortHash ?? DUMMY_HASH);
+
+    if (!user || !user.active || !isValidPassword) {
       await prisma.loginLog.create({
         data: {
-          userId: 'unknown',
+          userId: user?.id ?? null,
+          username: user ? undefined : username, // Eingabe-Username bei unbekannten Nutzern loggen
           ipAdresse: req.ip,
           erfolg: false
         }
       }).catch(() => {});
-      return res.status(401).json({ error: 'Ungültige Anmeldedaten' });
-    }
-
-    const isValidPassword = await bcrypt.compare(password, user.passwortHash);
-
-    if (!isValidPassword) {
-      await prisma.loginLog.create({
-        data: {
-          userId: user.id,
-          ipAdresse: req.ip,
-          erfolg: false
-        }
-      });
       return res.status(401).json({ error: 'Ungültige Anmeldedaten' });
     }
 

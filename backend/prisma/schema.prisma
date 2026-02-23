@@ -70,11 +70,12 @@ model User {
 
 model LoginLog {
   id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
   timestamp DateTime @default(now())
   ipAdresse String?
   erfolg    Boolean
+  username  String?  // Gespeicherter Benutzername bei fehlgeschlagenen Versuchen unbekannter Nutzer
 
   @@map("login_logs")
 }

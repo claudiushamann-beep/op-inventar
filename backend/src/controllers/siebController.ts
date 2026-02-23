@@ -97,6 +97,13 @@ export const createSieb = async (req: AuthRequest, res: Response) => {
   try {
     const { name, beschreibung, typ, fachabteilungId, instrumente } = req.body;
 
+    if (!name || !typ) {
+      return res.status(400).json({ error: 'Name und Typ sind Pflichtfelder' });
+    }
+    if (typ === 'FACHABTEILUNGSSPEZIFISCH' && !fachabteilungId) {
+      return res.status(400).json({ error: 'Fachabteilung ist für fachabteilungsspezifische Siebe erforderlich' });
+    }
+
     const sieb = await prisma.sieb.create({
       data: {
         name,
@@ -162,6 +169,11 @@ export const deleteSieb = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
+    const existing = await prisma.sieb.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({ error: 'Sieb nicht gefunden' });
+    }
+
     await prisma.sieb.update({
       where: { id },
       data: { status: 'ARCHIVIERT' }
@@ -206,6 +218,13 @@ export const removeInstrumentFromSieb = async (req: AuthRequest, res: Response) 
   try {
     const { id, instrumentId } = req.params;
 
+    const existing = await prisma.siebInhalt.findUnique({
+      where: { siebId_instrumentId: { siebId: id, instrumentId } }
+    });
+    if (!existing) {
+      return res.status(404).json({ error: 'Instrument nicht in diesem Sieb gefunden' });
+    }
+
     await prisma.siebInhalt.delete({
       where: {
         siebId_instrumentId: {
@@ -230,6 +249,13 @@ export const updateSiebInstrument = async (req: AuthRequest, res: Response) => {
   try {
     const { id, instrumentId } = req.params;
     const { anzahl, position, hinweis } = req.body;
+
+    const existing = await prisma.siebInhalt.findUnique({
+      where: { siebId_instrumentId: { siebId: id, instrumentId } }
+    });
+    if (!existing) {
+      return res.status(404).json({ error: 'Instrument nicht in diesem Sieb gefunden' });
+    }
 
     const siebInhalt = await prisma.siebInhalt.update({
       where: {

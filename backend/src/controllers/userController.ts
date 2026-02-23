@@ -59,18 +59,27 @@ export const getUser = async (req: AuthRequest, res: Response) => {
 export const updateUser = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+    const isManager = req.user!.rolle === 'OP_MANAGER';
+    const isSelf = req.user!.id === id;
+
+    // Normale Nutzer dürfen nur ihr eigenes Profil bearbeiten (ohne Rollen-/Statusänderung)
+    if (!isManager && !isSelf) {
+      return res.status(403).json({ error: 'Keine Berechtigung zum Bearbeiten dieses Benutzers' });
+    }
+
     const { vorname, nachname, email, rolle, active, fachabteilungId } = req.body;
+
+    // Nur der OP_MANAGER darf Rolle, Aktivierungsstatus und Abteilung fremder Nutzer ändern
+    const data: Record<string, unknown> = { vorname, nachname, email };
+    if (isManager) {
+      data.rolle = rolle;
+      data.active = active;
+      data.fachabteilungId = fachabteilungId || null;
+    }
 
     const user = await prisma.user.update({
       where: { id },
-      data: {
-        vorname,
-        nachname,
-        email,
-        rolle,
-        active,
-        fachabteilungId: fachabteilungId || null
-      },
+      data,
       select: {
         id: true,
         username: true,
@@ -184,7 +193,6 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Benutzer nicht gefunden' });
     }
 
-    const bcrypt = await import('bcryptjs');
     const isValid = await bcrypt.compare(oldPassword, user.passwortHash);
 
     if (!isValid) {

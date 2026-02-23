@@ -125,21 +125,27 @@ export const approveAenderung = async (req: AuthRequest, res: Response) => {
     }
 
     const canApprove = checkApprovalPermission(req.user!, aenderung.sieb);
-    
+
     if (!canApprove) {
       return res.status(403).json({ error: 'Keine Berechtigung zur Freigabe' });
     }
 
-    await applyAenderung(aenderung);
+    // Atomare Transaktion: Änderung anwenden und Status in einem Schritt aktualisieren
+    await prisma.$transaction(async (tx) => {
+      await applyAenderung(aenderung, tx);
+      await tx.aenderung.update({
+        where: { id },
+        data: {
+          status: 'APPROVED',
+          genehmigtVonId: req.user!.id,
+          genehmigtAm: new Date(),
+          kommentar: kommentar || aenderung.kommentar
+        }
+      });
+    });
 
-    const updatedAenderung = await prisma.aenderung.update({
+    const updatedAenderung = await prisma.aenderung.findUniqueOrThrow({
       where: { id },
-      data: {
-        status: 'APPROVED',
-        genehmigtVonId: req.user!.id,
-        genehmigtAm: new Date(),
-        kommentar: kommentar || aenderung.kommentar
-      },
       include: {
         sieb: { include: { fachabteilung: true } },
         beantragtVon: {
@@ -224,24 +230,24 @@ function checkApprovalPermission(user: any, sieb: any): boolean {
   return false;
 }
 
-async function applyAenderung(aenderung: any) {
+async function applyAenderung(aenderung: any, tx: any) {
   const { typ, neuDaten, siebId } = aenderung;
 
   switch (typ) {
     case 'ADD_INSTRUMENT':
-      await prisma.siebInhalt.create({
+      await tx.siebInhalt.create({
         data: {
           siebId,
           instrumentId: neuDaten.instrumentId,
           anzahl: neuDaten.anzahl || 1,
-          position: neuDaten.position,
-          hinweis: neuDaten.hinweis
+          position: neuDaten.position ?? null,
+          hinweis: neuDaten.hinweis ?? null
         }
       });
       break;
 
     case 'REMOVE_INSTRUMENT':
-      await prisma.siebInhalt.delete({
+      await tx.siebInhalt.delete({
         where: {
           siebId_instrumentId: {
             siebId,
@@ -252,34 +258,46 @@ async function applyAenderung(aenderung: any) {
       break;
 
     case 'MODIFY_ANZAHL':
-    case 'MODIFY_POSITION':
-      await prisma.siebInhalt.update({
+      // Nur erlaubte Felder übergeben, kein rohes neuDaten-Objekt
+      await tx.siebInhalt.update({
         where: {
           siebId_instrumentId: {
             siebId,
             instrumentId: neuDaten.instrumentId
           }
         },
-        data: neuDaten
+        data: { anzahl: neuDaten.anzahl }
+      });
+      break;
+
+    case 'MODIFY_POSITION':
+      await tx.siebInhalt.update({
+        where: {
+          siebId_instrumentId: {
+            siebId,
+            instrumentId: neuDaten.instrumentId
+          }
+        },
+        data: { position: neuDaten.position }
       });
       break;
 
     case 'CREATE_SIEB':
-      await prisma.sieb.update({
+      await tx.sieb.update({
         where: { id: siebId },
         data: { status: 'AKTIV' }
       });
       break;
 
     case 'DEACTIVATE_SIEB':
-      await prisma.sieb.update({
+      await tx.sieb.update({
         where: { id: siebId },
         data: { status: 'INAKTIV' }
       });
       break;
   }
 
-  await prisma.sieb.update({
+  await tx.sieb.update({
     where: { id: siebId },
     data: { version: { increment: 1 } }
   });
