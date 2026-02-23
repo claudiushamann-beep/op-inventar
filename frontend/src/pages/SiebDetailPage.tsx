@@ -42,7 +42,6 @@ import { siebApi, instrumentApi, aenderungApi } from '@/utils/api';
 import { Sieb, Instrument, SiebStatus, Rolle } from '@/types';
 
 const canEdit = (rolle: Rolle) => ['OBERARZT', 'CHEFARZT', 'OP_MANAGER', 'AEMP_MITARBEITER'].includes(rolle);
-const canRequestChange = () => true;
 
 export const SiebDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -52,7 +51,6 @@ export const SiebDetailPage: React.FC = () => {
   const [instrumente, setInstrumente] = useState<Instrument[]>([]);
   const [loading, setLoading] = useState(true);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [changeDialogOpen, setChangeDialogOpen] = useState(false);
   const [selectedInstrument, setSelectedInstrument] = useState('');
   const [anzahl, setAnzahl] = useState(1);
   const [position, setPosition] = useState('');
@@ -100,8 +98,9 @@ export const SiebDetailPage: React.FC = () => {
       setAnzahl(1);
       setPosition('');
       setChangeComment('');
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Fehler beim Hinzufügen' });
+    } catch (error: any) {
+      const msg = error?.response?.data?.error ?? 'Fehler beim Hinzufügen';
+      setMessage({ type: 'error', text: msg });
     }
   };
 
@@ -264,11 +263,13 @@ export const SiebDetailPage: React.FC = () => {
               label="Instrument"
               onChange={(e) => setSelectedInstrument(e.target.value)}
             >
-              {instrumente.map((inst) => (
-                <MenuItem key={inst.id} value={inst.id}>
-                  {inst.artikelNr} - {inst.bezeichnung}
-                </MenuItem>
-              ))}
+              {instrumente
+                .filter((inst) => !sieb.instrumente?.some((si) => si.instrumentId === inst.id))
+                .map((inst) => (
+                  <MenuItem key={inst.id} value={inst.id}>
+                    {inst.artikelNr} - {inst.bezeichnung}
+                  </MenuItem>
+                ))}
             </Select>
           </FormControl>
           <TextField

@@ -190,6 +190,17 @@ export const addInstrumentToSieb = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const { instrumentId, anzahl, position, hinweis } = req.body;
 
+    if (!instrumentId) {
+      return res.status(400).json({ error: 'instrumentId ist erforderlich' });
+    }
+
+    const duplicate = await prisma.siebInhalt.findUnique({
+      where: { siebId_instrumentId: { siebId: id, instrumentId } }
+    });
+    if (duplicate) {
+      return res.status(409).json({ error: 'Instrument ist bereits in diesem Sieb enthalten' });
+    }
+
     const siebInhalt = await prisma.siebInhalt.create({
       data: {
         siebId: id,
