@@ -9,7 +9,7 @@ export const userRoutes = Router();
 userRoutes.get('/', authMiddleware, requireRolle(Rolle.CHEFARZT, Rolle.OP_MANAGER, Rolle.AEMP_MITARBEITER), getUsers);
 userRoutes.get('/:id', authMiddleware, getUser);
 userRoutes.post('/', authMiddleware, requireRolle(Rolle.OP_MANAGER), createUser);
-userRoutes.put('/:id', authMiddleware, updateUser);
+userRoutes.put('/:id', authMiddleware, requireRolle(Rolle.OP_MANAGER), updateUser);
 userRoutes.delete('/:id', authMiddleware, requireRolle(Rolle.OP_MANAGER), deleteUser);
 userRoutes.post('/:id/change-password', authMiddleware, changePassword);
 userRoutes.post('/:id/reset-password', authMiddleware, requireRolle(Rolle.OP_MANAGER), resetPassword);

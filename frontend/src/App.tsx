@@ -17,15 +17,104 @@ import { FachabteilungenPage } from '@/pages/FachabteilungenPage';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#1976d2',
+      main: '#1976D2',
+      light: '#42A5F5',
+      dark: '#1565C0'
     },
     secondary: {
-      main: '#9c27b0',
+      main: '#7C4DFF',
+      light: '#B47CFF',
+      dark: '#5C35CC'
     },
+    error: {
+      main: '#E53935'
+    },
+    success: {
+      main: '#43A047'
+    },
+    warning: {
+      main: '#FB8C00'
+    },
+    background: {
+      default: '#F5F7FA',
+      paper: '#FFFFFF'
+    }
   },
   typography: {
     fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    h4: { fontWeight: 700 },
+    h5: { fontWeight: 600 },
+    h6: { fontWeight: 600 }
   },
+  shape: {
+    borderRadius: 8
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          borderRadius: 8,
+          fontWeight: 500
+        }
+      }
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 16,
+          boxShadow: '0 1px 4px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04)'
+        }
+      }
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 12
+        }
+      }
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          borderRadius: 100
+        }
+      }
+    },
+    MuiTableHead: {
+      styleOverrides: {
+        root: {
+          '& .MuiTableCell-head': {
+            backgroundColor: '#F5F7FA',
+            fontWeight: 700,
+            fontSize: '0.75rem',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            color: '#546E7A'
+          }
+        }
+      }
+    },
+    MuiTextField: {
+      defaultProps: {
+        size: 'small'
+      }
+    },
+    MuiListItemButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          margin: '2px 8px',
+          '&.Mui-selected': {
+            backgroundColor: 'rgba(25, 118, 210, 0.08)',
+            '&:hover': {
+              backgroundColor: 'rgba(25, 118, 210, 0.12)'
+            }
+          }
+        }
+      }
+    }
+  }
 });
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {

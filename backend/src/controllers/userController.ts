@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import bcrypt from 'bcryptjs';
+import { Prisma } from '@prisma/client';
 import prisma from '../utils/prisma.js';
 import { AuthRequest } from '../middleware/auth.js';
 
@@ -22,6 +23,7 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
 
     res.json(users);
   } catch (error) {
+    console.error('getUsers error:', error);
     res.status(500).json({ error: 'Interner Serverfehler' });
   }
 };
@@ -52,6 +54,7 @@ export const getUser = async (req: AuthRequest, res: Response) => {
 
     res.json(user);
   } catch (error) {
+    console.error('getUser error:', error);
     res.status(500).json({ error: 'Interner Serverfehler' });
   }
 };
@@ -85,6 +88,15 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
 
     res.json(user);
   } catch (error) {
+    console.error('updateUser error:', error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return res.status(400).json({ error: 'E-Mail bereits vergeben' });
+      }
+      if (error.code === 'P2025') {
+        return res.status(404).json({ error: 'Benutzer nicht gefunden' });
+      }
+    }
     res.status(500).json({ error: 'Interner Serverfehler' });
   }
 };
@@ -103,6 +115,12 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Benutzer gelöscht' });
   } catch (error) {
+    console.error('deleteUser error:', error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') {
+        return res.status(404).json({ error: 'Benutzer nicht gefunden' });
+      }
+    }
     res.status(500).json({ error: 'Interner Serverfehler' });
   }
 };
@@ -131,6 +149,7 @@ export const createUser = async (req: AuthRequest, res: Response) => {
         vorname,
         nachname,
         rolle,
+        active: true,
         fachabteilungId: fachabteilungId || null
       },
       select: {
@@ -147,6 +166,12 @@ export const createUser = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json(user);
   } catch (error) {
+    console.error('createUser error:', error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return res.status(400).json({ error: 'Benutzername oder E-Mail bereits vergeben' });
+      }
+    }
     res.status(500).json({ error: 'Interner Serverfehler' });
   }
 };
@@ -165,6 +190,12 @@ export const resetPassword = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Passwort erfolgreich zurückgesetzt' });
   } catch (error) {
+    console.error('resetPassword error:', error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') {
+        return res.status(404).json({ error: 'Benutzer nicht gefunden' });
+      }
+    }
     res.status(500).json({ error: 'Interner Serverfehler' });
   }
 };
@@ -179,19 +210,19 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
     }
 
     const user = await prisma.user.findUnique({ where: { id } });
-    
+
     if (!user) {
       return res.status(404).json({ error: 'Benutzer nicht gefunden' });
     }
 
-    const bcrypt = await import('bcryptjs');
-    const isValid = await bcrypt.compare(oldPassword, user.passwortHash);
+    const bcryptLib = await import('bcryptjs');
+    const isValid = await bcryptLib.compare(oldPassword, user.passwortHash);
 
     if (!isValid) {
       return res.status(400).json({ error: 'Altes Passwort falsch' });
     }
 
-    const passwortHash = await bcrypt.hash(newPassword, 10);
+    const passwortHash = await bcryptLib.hash(newPassword, 10);
 
     await prisma.user.update({
       where: { id },
@@ -200,6 +231,7 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Passwort erfolgreich geändert' });
   } catch (error) {
+    console.error('changePassword error:', error);
     res.status(500).json({ error: 'Interner Serverfehler' });
   }
 };

@@ -115,3 +115,10 @@ export const userApi = {
   resetPassword: (id: string, newPassword: string) =>
     api.post(`/users/${id}/reset-password`, { newPassword })
 };
+
+export const kiApi = {
+  search: (query: string) => api.post('/ki/search', { query }),
+  getSettings: () => api.get('/ki/settings'),
+  updateSettings: (data: { provider: string; apiKey?: string }) =>
+    api.put('/ki/settings', data)
+};

@@ -26,7 +26,7 @@ export interface Fachabteilung {
   kuerzel: string;
   beschreibung?: string;
   chefArzt?: User;
-  _count?: { siebe: number; user: number };
+  _count?: { siebe: number; mitarbeiter: number };
 }
 
 export interface Hersteller {
@@ -99,4 +99,19 @@ export interface AuthResponse {
 export interface ApiError {
   error: string;
   message?: string;
+}
+
+export interface KiSearchResult {
+  artikelNr: string;
+  bezeichnung: string;
+  hersteller: string;
+  beschreibung: string;
+  bildUrl?: string;
+}
+
+export interface KiSettings {
+  provider: 'anthropic' | 'openai' | 'google';
+  anthropicKeySet: boolean;
+  openaiKeySet: boolean;
+  googleKeySet: boolean;
 }

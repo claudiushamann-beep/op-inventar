@@ -100,6 +100,12 @@ export const canRequestAenderung = (req: AuthRequest, res: Response, next: NextF
     return res.status(401).json({ error: 'Nicht authentifiziert' });
   }
 
+  const erlaubt: Rolle[] = ['OBERARZT', 'CHEFARZT', 'OP_MANAGER', 'AEMP_MITARBEITER'];
+
+  if (!erlaubt.includes(req.user.rolle as Rolle)) {
+    return res.status(403).json({ error: 'Keine Berechtigung zum Beantragen von Änderungen' });
+  }
+
   next();
 };
 

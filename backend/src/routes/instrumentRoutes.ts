@@ -7,7 +7,7 @@ import {
   updateInstrument, deleteInstrument
 } from '../controllers/instrumentController.js';
 import { authMiddleware } from '../middleware/auth.js';
-import { requireMinRolle } from '../middleware/rbac.js';
+import { requireMinRolle, requireRolle } from '../middleware/rbac.js';
 import { Rolle } from '@prisma/client';
 
 const router = Router();
@@ -41,7 +41,7 @@ router.get('/', authMiddleware, getInstrumente);
 router.get('/:id', authMiddleware, getInstrument);
 router.post('/', authMiddleware, requireMinRolle(Rolle.OBERARZT), createInstrument);
 router.put('/:id', authMiddleware, requireMinRolle(Rolle.OBERARZT), updateInstrument);
-router.delete('/:id', authMiddleware, requireMinRolle(Rolle.AEMP_MITARBEITER), deleteInstrument);
+router.delete('/:id', authMiddleware, requireRolle(Rolle.OP_MANAGER), deleteInstrument);
 
 router.post('/:id/bild', authMiddleware, upload.single('bild'), (req, res) => {
   if (!req.file) {

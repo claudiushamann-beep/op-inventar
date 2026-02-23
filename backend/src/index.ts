@@ -8,6 +8,7 @@ import { instrumentRoutes } from './routes/instrumentRoutes.js';
 import { fachabteilungRoutes } from './routes/fachabteilungRoutes.js';
 import { herstellerRoutes } from './routes/herstellerRoutes.js';
 import { aenderungRoutes } from './routes/aenderungRoutes.js';
+import { kiRoutes } from './routes/kiRoutes.js';
 
 dotenv.config();
 
@@ -37,6 +38,7 @@ app.use('/api/instrumente', instrumentRoutes);
 app.use('/api/fachabteilungen', fachabteilungRoutes);
 app.use('/api/hersteller', herstellerRoutes);
 app.use('/api/aenderungen', aenderungRoutes);
+app.use('/api/ki', kiRoutes);
 
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Error:', err.message);

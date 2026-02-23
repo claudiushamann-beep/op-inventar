@@ -19,7 +19,11 @@ import {
   DialogActions,
   Chip,
   Alert,
-  Snackbar
+  Snackbar,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -205,7 +209,7 @@ export const FachabteilungenPage: React.FC = () => {
                     : '-'}
                 </TableCell>
                 <TableCell>{fach._count?.siebe || 0}</TableCell>
-                <TableCell>{fach._count?.user || 0}</TableCell>
+                <TableCell>{fach._count?.mitarbeiter || 0}</TableCell>
                 {user && canManage(user.rolle) && (
                   <TableCell align="right">
                     <IconButton size="small" onClick={() => handleOpenEdit(fach)}>
@@ -253,21 +257,21 @@ export const FachabteilungenPage: React.FC = () => {
             multiline
             rows={2}
           />
-          <TextField
-            fullWidth
-            select
-            label="Chefarzt"
-            value={formData.chefArztId}
-            onChange={(e) => setFormData({ ...formData, chefArztId: e.target.value })}
-            margin="normal"
-          >
-            <option value="">Kein Chefarzt zugewiesen</option>
-            {aerzte.map((arzt) => (
-              <option key={arzt.id} value={arzt.id}>
-                {arzt.vorname} {arzt.nachname} ({arzt.rolle})
-              </option>
-            ))}
-          </TextField>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Chefarzt</InputLabel>
+            <Select
+              value={formData.chefArztId}
+              label="Chefarzt"
+              onChange={(e) => setFormData({ ...formData, chefArztId: e.target.value })}
+            >
+              <MenuItem value="">Kein Chefarzt zugewiesen</MenuItem>
+              {aerzte.map((arzt) => (
+                <MenuItem key={arzt.id} value={arzt.id}>
+                  {arzt.vorname} {arzt.nachname} ({arzt.rolle})
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>Abbrechen</Button>

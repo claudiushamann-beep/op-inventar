@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Box,
   Typography,
@@ -25,21 +25,25 @@ import {
   Alert,
   Snackbar,
   Avatar,
-  Card,
-  CardMedia
+  Tooltip
 } from '@mui/material';
 import {
   Search as SearchIcon,
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Image as ImageIcon
+  Image as ImageIcon,
+  AutoAwesome as KiIcon,
+  CloudUpload as UploadIcon
 } from '@mui/icons-material';
 import { useAuth } from '@/context/AuthContext';
 import { instrumentApi, herstellerApi } from '@/utils/api';
-import { Instrument, Hersteller, Rolle } from '@/types';
+import { Instrument, Hersteller, Rolle, KiSearchResult } from '@/types';
+import { KiSearchDialog } from '@/components/KiSearchDialog';
+import { TableSkeleton } from '@/components/SkeletonLoader';
 
 const canManage = (rolle: Rolle) => ['OP_MANAGER', 'AEMP_MITARBEITER'].includes(rolle);
+const canUseKi = (rolle: Rolle) => ['OP_MANAGER', 'AEMP_MITARBEITER', 'OBERARZT', 'CHEFARZT'].includes(rolle);
 
 export const InstrumentePage: React.FC = () => {
   const { user } = useAuth();
@@ -49,7 +53,11 @@ export const InstrumentePage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [kiDialogOpen, setKiDialogOpen] = useState(false);
   const [selectedInstrument, setSelectedInstrument] = useState<Instrument | null>(null);
+  const [bildDatei, setBildDatei] = useState<File | null>(null);
+  const [bildPreview, setBildPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false, message: '', severity: 'success'
   });
@@ -86,6 +94,8 @@ export const InstrumentePage: React.FC = () => {
   const handleOpenCreate = () => {
     setSelectedInstrument(null);
     setFormData({ artikelNr: '', bezeichnung: '', beschreibung: '', herstellerId: '' });
+    setBildDatei(null);
+    setBildPreview(null);
     setDialogOpen(true);
   };
 
@@ -97,6 +107,8 @@ export const InstrumentePage: React.FC = () => {
       beschreibung: inst.beschreibung || '',
       herstellerId: inst.herstellerId
     });
+    setBildDatei(null);
+    setBildPreview(inst.bildPfad || null);
     setDialogOpen(true);
   };
 
@@ -105,14 +117,43 @@ export const InstrumentePage: React.FC = () => {
     setDeleteDialogOpen(true);
   };
 
+  const handleBildSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBildDatei(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setBildPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleKiApply = (result: KiSearchResult) => {
+    const matchedHersteller = hersteller.find(
+      h => h.name.toLowerCase().includes(result.hersteller.toLowerCase())
+    );
+    setFormData(prev => ({
+      ...prev,
+      artikelNr: result.artikelNr || prev.artikelNr,
+      bezeichnung: result.bezeichnung || prev.bezeichnung,
+      beschreibung: result.beschreibung || prev.beschreibung,
+      herstellerId: matchedHersteller?.id || prev.herstellerId
+    }));
+    setDialogOpen(true);
+  };
+
   const handleSave = async () => {
     try {
+      let savedId: string;
       if (selectedInstrument) {
         await instrumentApi.update(selectedInstrument.id, formData);
+        savedId = selectedInstrument.id;
         setSnackbar({ open: true, message: 'Instrument aktualisiert', severity: 'success' });
       } else {
-        await instrumentApi.create(formData);
+        const res = await instrumentApi.create(formData);
+        savedId = res.data.id;
         setSnackbar({ open: true, message: 'Instrument erstellt', severity: 'success' });
+      }
+      if (bildDatei) {
+        await instrumentApi.uploadBild(savedId, bildDatei);
       }
       setDialogOpen(false);
       fetchData();
@@ -135,11 +176,11 @@ export const InstrumentePage: React.FC = () => {
     }
   };
 
-  if (loading) return <Typography>Laden...</Typography>;
+  if (loading) return <TableSkeleton rows={6} cols={6} />;
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, gap: 1, flexWrap: 'wrap' }}>
         <TextField
           placeholder="Instrumente suchen..."
           size="small"
@@ -150,11 +191,24 @@ export const InstrumentePage: React.FC = () => {
           }}
           sx={{ width: 300 }}
         />
-        {user && canManage(user.rolle) && (
-          <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenCreate}>
-            Neues Instrument
-          </Button>
-        )}
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {user && canUseKi(user.rolle) && (
+            <Tooltip title="KI-gestützte Instrumentensuche">
+              <Button
+                variant="outlined"
+                startIcon={<KiIcon />}
+                onClick={() => setKiDialogOpen(true)}
+              >
+                KI-Suche
+              </Button>
+            </Tooltip>
+          )}
+          {user && canManage(user.rolle) && (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenCreate}>
+              Neues Instrument
+            </Button>
+          )}
+        </Box>
       </Box>
 
       <TableContainer component={Paper}>
@@ -204,6 +258,41 @@ export const InstrumentePage: React.FC = () => {
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>{selectedInstrument ? 'Instrument bearbeiten' : 'Neues Instrument'}</DialogTitle>
         <DialogContent>
+          <Box
+            sx={{
+              width: '100%',
+              height: 160,
+              border: '2px dashed',
+              borderColor: 'divider',
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mt: 1,
+              mb: 1,
+              cursor: 'pointer',
+              overflow: 'hidden',
+              position: 'relative'
+            }}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {bildPreview ? (
+              <img src={bildPreview} alt="Vorschau" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            ) : (
+              <Box sx={{ textAlign: 'center', color: 'text.secondary' }}>
+                <UploadIcon sx={{ fontSize: 40 }} />
+                <Typography variant="body2">Bild hochladen</Typography>
+              </Box>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              style={{ display: 'none' }}
+              onChange={handleBildSelect}
+            />
+          </Box>
+
           <FormControl fullWidth margin="normal">
             <InputLabel>Hersteller</InputLabel>
             <Select value={formData.herstellerId} label="Hersteller" onChange={(e) => setFormData({ ...formData, herstellerId: e.target.value })} required>
@@ -232,6 +321,12 @@ export const InstrumentePage: React.FC = () => {
           <Button variant="contained" color="error" onClick={handleDelete}>Löschen</Button>
         </DialogActions>
       </Dialog>
+
+      <KiSearchDialog
+        open={kiDialogOpen}
+        onClose={() => setKiDialogOpen(false)}
+        onApply={handleKiApply}
+      />
 
       <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar({ ...snackbar, open: false })}>
         <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
