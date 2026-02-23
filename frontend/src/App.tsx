@@ -13,6 +13,7 @@ import { UsersPage } from '@/pages/UsersPage';
 import { InstrumentePage } from '@/pages/InstrumentePage';
 import { HerstellerPage } from '@/pages/HerstellerPage';
 import { FachabteilungenPage } from '@/pages/FachabteilungenPage';
+import { EinstellungenPage } from '@/pages/EinstellungenPage';
 
 const theme = createTheme({
   palette: {
@@ -123,6 +124,16 @@ const AppRoutes: React.FC = () => {
           <PrivateRoute>
             <Layout>
               <UsersPage />
+            </Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/einstellungen"
+        element={
+          <PrivateRoute>
+            <Layout>
+              <EinstellungenPage />
             </Layout>
           </PrivateRoute>
         }

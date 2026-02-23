@@ -100,3 +100,24 @@ export interface ApiError {
   error: string;
   message?: string;
 }
+
+export interface KiInstrumentResult {
+  bezeichnung: string;
+  artikelNr: string;
+  hersteller: string;
+  beschreibung: string;
+  bildUrl?: string;
+}
+
+export interface KiSettings {
+  provider: 'anthropic' | 'openai' | 'google';
+  hasApiKey: boolean;
+}
+
+export interface KiTestResult {
+  success: boolean;
+  provider?: string;
+  model?: string;
+  testResult?: string;
+  error?: string;
+}

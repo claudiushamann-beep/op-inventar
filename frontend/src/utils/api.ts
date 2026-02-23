@@ -115,3 +115,16 @@ export const userApi = {
   resetPassword: (id: string, newPassword: string) =>
     api.post(`/users/${id}/reset-password`, { newPassword })
 };
+
+export const kiApi = {
+  search: (query: string) => api.post('/ki/search', { query }),
+  save: (data: Record<string, unknown>) => api.post('/ki/save', data),
+  getSettings: () => api.get('/ki/settings'),
+  updateSettings: (data: { provider: string; apiKey?: string }) => api.put('/ki/settings', data),
+  test: () => api.post('/ki/test'),
+  identify: (file: File) => {
+    const fd = new FormData();
+    fd.append('bild', file);
+    return api.post('/ki/identify', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  }
+};

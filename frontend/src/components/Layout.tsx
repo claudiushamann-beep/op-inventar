@@ -26,7 +26,8 @@ import {
   Assignment,
   AdminPanelSettings,
   AccountCircle,
-  Logout
+  Logout,
+  Settings
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -48,7 +49,8 @@ const navItems: NavItem[] = [
   { text: 'Fachabteilungen', icon: <Business />, path: '/fachabteilungen' },
   { text: 'Hersteller', icon: <Factory />, path: '/hersteller' },
   { text: 'Änderungen', icon: <Assignment />, path: '/aenderungen' },
-  { text: 'Benutzerverwaltung', icon: <AdminPanelSettings />, path: '/users', roles: ['CHEFARZT', 'OP_MANAGER', 'AEMP_MITARBEITER'] }
+  { text: 'Benutzerverwaltung', icon: <AdminPanelSettings />, path: '/users', roles: ['CHEFARZT', 'OP_MANAGER', 'AEMP_MITARBEITER'] },
+  { text: 'KI-Einstellungen', icon: <Settings />, path: '/einstellungen', roles: ['OP_MANAGER'] }
 ];
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
