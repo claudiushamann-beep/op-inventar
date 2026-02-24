@@ -50,7 +50,7 @@ const navItems: NavItem[] = [
   { text: 'Hersteller', icon: <Factory />, path: '/hersteller' },
   { text: 'Änderungen', icon: <Assignment />, path: '/aenderungen' },
   { text: 'Benutzerverwaltung', icon: <AdminPanelSettings />, path: '/users', roles: ['CHEFARZT', 'OP_MANAGER', 'AEMP_MITARBEITER'] },
-  { text: 'KI-Einstellungen', icon: <Settings />, path: '/einstellungen', roles: ['OP_MANAGER'] }
+  { text: 'KI-Einstellungen', icon: <Settings />, path: '/einstellungen' }
 ];
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { authMiddleware } from '../middleware/auth.js';
-import { requireMinRolle, requireRolle } from '../middleware/rbac.js';
+import { requireMinRolle } from '../middleware/rbac.js';
 import { Rolle } from '@prisma/client';
 import {
   kiSearch,
@@ -30,8 +30,8 @@ const upload = multer({
 
 router.post('/search', authMiddleware, requireMinRolle(Rolle.OBERARZT), kiSearch);
 router.post('/save', authMiddleware, requireMinRolle(Rolle.AEMP_MITARBEITER), kiSave);
-router.get('/settings', authMiddleware, requireRolle(Rolle.OP_MANAGER), kiGetSettings);
-router.put('/settings', authMiddleware, requireRolle(Rolle.OP_MANAGER), kiUpdateSettings);
+router.get('/settings', authMiddleware, kiGetSettings);
+router.put('/settings', authMiddleware, kiUpdateSettings);
 router.post('/test', authMiddleware, requireMinRolle(Rolle.OBERARZT), kiTest);
 router.post('/identify', authMiddleware, requireMinRolle(Rolle.OBERARZT), upload.single('bild'), kiIdentify);
 
