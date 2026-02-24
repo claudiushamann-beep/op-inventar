@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
   Button,
   Chip,
-  Grid,
   TextField,
   InputAdornment,
   IconButton,
@@ -24,14 +21,12 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Avatar
+  Paper
 } from '@mui/material';
 import {
   Search as SearchIcon,
   Add as AddIcon,
-  Visibility as ViewIcon,
-  Edit as EditIcon
+  Visibility as ViewIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';

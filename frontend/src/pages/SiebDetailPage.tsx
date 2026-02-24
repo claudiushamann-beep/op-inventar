@@ -6,7 +6,6 @@ import {
   Chip,
   Grid,
   Card,
-  CardContent,
   CardMedia,
   Table,
   TableBody,
@@ -25,16 +24,13 @@ import {
   Select,
   MenuItem,
   IconButton,
-  Alert,
-  Divider
+  Alert
 } from '@mui/material';
 import {
   ArrowBack,
   Add,
   Delete,
-  Edit,
-  CloudUpload,
-  Assignment
+  CloudUpload
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -42,7 +38,6 @@ import { siebApi, instrumentApi, aenderungApi } from '@/utils/api';
 import { Sieb, Instrument, SiebStatus, Rolle } from '@/types';
 
 const canEdit = (rolle: Rolle) => ['OBERARZT', 'CHEFARZT', 'OP_MANAGER', 'AEMP_MITARBEITER'].includes(rolle);
-const canRequestChange = () => true;
 
 export const SiebDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -52,7 +47,6 @@ export const SiebDetailPage: React.FC = () => {
   const [instrumente, setInstrumente] = useState<Instrument[]>([]);
   const [loading, setLoading] = useState(true);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [changeDialogOpen, setChangeDialogOpen] = useState(false);
   const [selectedInstrument, setSelectedInstrument] = useState('');
   const [anzahl, setAnzahl] = useState(1);
   const [position, setPosition] = useState('');

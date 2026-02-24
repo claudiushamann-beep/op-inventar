@@ -25,7 +25,6 @@ import {
   Factory,
   Assignment,
   AdminPanelSettings,
-  AccountCircle,
   Logout,
   Settings
 } from '@mui/icons-material';

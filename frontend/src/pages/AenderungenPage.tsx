@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
-  Card,
-  CardContent,
   Button,
   Chip,
   Table,
@@ -18,13 +16,11 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Alert,
-  Divider
+  Alert
 } from '@mui/material';
 import {
   Check as ApproveIcon,
-  Close as RejectIcon,
-  Visibility as ViewIcon
+  Close as RejectIcon
 } from '@mui/icons-material';
 import { aenderungApi } from '@/utils/api';
 import { useAuth } from '@/context/AuthContext';
@@ -149,7 +145,7 @@ export const AenderungenPage: React.FC = () => {
                   user.rolle,
                   aenderung.sieb?.typ,
                   aenderung.sieb?.fachabteilungId,
-                  user.fachabteilungId
+                  user.fachabteilung?.id
                 );
 
                 return (
